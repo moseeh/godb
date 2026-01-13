@@ -257,27 +257,4 @@ No external dependencies required.
 
 This is a demonstration project. Use freely for learning and reference.
 
-## Future Enhancements (If Extended)
 
-While out of scope for this implementation, potential extensions include:
-
-- B-tree indexes for range queries
-- Query execution plans with EXPLAIN
-- Additional data types (FLOAT, DATE, BLOB)
-- LEFT/RIGHT JOIN support
-- Basic aggregation functions (COUNT, SUM, AVG)
-- Simple transaction support with rollback
-- CSV import/export
-- Disk persistence layer
-
-## Design Philosophy
-
-godb prioritizes:
-
-1. **Readability** over performance
-2. **Explicitness** over cleverness
-3. **Simplicity** over feature completeness
-4. **Testability** over convenience
-5. **Separation of concerns** over monolithic design
-
-The goal is to demonstrate solid engineering practices in a minimal database implementation.

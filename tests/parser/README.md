@@ -1,0 +1,3 @@
+# tests/parser package
+
+This package contains tests for the SQL parser.

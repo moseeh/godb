@@ -9,8 +9,9 @@ A minimal, in-memory relational database implemented in Go, demonstrating clean 
 - **CRUD Operations**: INSERT, SELECT, UPDATE, DELETE with WHERE clauses
 - **Hash-based Indexing** for efficient equality lookups
 - **INNER JOIN** support with index optimization
-- **Two Interfaces**:
+- **Three Interfaces**:
   - Interactive REPL for manual database interaction
+  - Visual Web UI with query builder and SQL console
   - HTTP REST API for programmatic access
 
 ## Architecture
@@ -18,17 +19,21 @@ A minimal, in-memory relational database implemented in Go, demonstrating clean 
 godb follows strict separation of concerns:
 
 ```
-┌─────────────┐     ┌─────────────┐
-│    REPL     │     │  Web Server │
-│  (CLI)      │     │  (HTTP API) │
-└──────┬──────┘     └──────┬──────┘
-       │                   │
-       └──────────┬────────┘
-                  │
-         ┌────────▼────────┐
-         │  Database Core  │
-         │    (Engine)     │
-         └─────────────────┘
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│    REPL     │     │   Web UI    │     │  REST API   │
+│   (CLI)     │     │  (Browser)  │     │   (HTTP)    │
+└──────┬──────┘     └──────┬──────┘     └──────┬──────┘
+       │                   │                   │
+       │           ┌───────┴───────┐           │
+       │           │               │           │
+       └───────────┤    Parser     ├───────────┘
+                   │               │
+                   └───────┬───────┘
+                           │
+                  ┌────────▼────────┐
+                  │  Database Core  │
+                  │    (Engine)     │
+                  └─────────────────┘
 ```
 
 ### Core Components
@@ -36,7 +41,11 @@ godb follows strict separation of concerns:
 - **engine/**: Database core - tables, rows, constraints, indexes, CRUD, joins
 - **parser/**: SQL-like command parsing (no external dependencies)
 - **repl/**: Interactive command-line interface
-- **web/**: HTTP REST API server
+- **web/**: Web server with interactive UI and REST API
+  - **templates/**: HTML templates for the visual interface
+  - **static/**: CSS styling and HTMX library
+  - **handlers.go**: HTTP request handlers
+  - **server.go**: Server configuration
 - **cmd/**: Entry points for REPL and web server
 
 ## Installation & Usage
@@ -68,7 +77,7 @@ go build -o godb-web cmd/web/main.go
 CREATE TABLE users (id INT PRIMARY KEY, name STRING NOT NULL, email STRING UNIQUE)
 
 -- Insert data
-INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')
+INSERT INTO users (id, name, email) VALUES (1, 'moses', 'moses@example.com')
 INSERT INTO users (id, name, email) VALUES (2, 'Bob', 'bob@example.com')
 
 -- Query data
@@ -76,7 +85,7 @@ SELECT * FROM users
 SELECT name, email FROM users WHERE id = 1
 
 -- Update data
-UPDATE users SET name = 'Alice Smith' WHERE id = 1
+UPDATE users SET name = 'Moses Otieno' WHERE id = 1
 
 -- Delete data
 DELETE FROM users WHERE id = 2
@@ -92,13 +101,60 @@ INSERT INTO posts (id, user_id, title, body) VALUES (2, 1, 'Second Post', 'Anoth
 SELECT * FROM posts INNER JOIN users ON posts.user_id = users.id
 ```
 
-### Running the Web Server
+### Running the Web UI
 
 ```bash
 ./godb-web
 ```
 
-The server starts on `http://localhost:8080` with these endpoints:
+Navigate to `http://localhost:8080/` in your browser to access the interactive web interface.
+
+#### Web UI Features
+
+The web interface provides four main tabs:
+
+**1. SQL Console**
+- Execute raw SQL commands directly
+- Real-time syntax validation via parser
+- Instant results display
+- Supports all SQL operations (CREATE, INSERT, SELECT, UPDATE, DELETE, JOIN)
+
+**2. Create Table Wizard**
+- Step-by-step table creation
+- Visual column builder with type selection
+- Constraint configuration (Primary Key, Unique, NOT NULL)
+- Single primary key enforcement
+- SQL preview before execution
+
+**3. Insert Data**
+- Select existing table from dropdown
+- Dynamic form generation based on table schema
+- Type-appropriate input fields (number for INT, text for STRING, checkbox for BOOL)
+- Automatic constraint validation
+
+**4. Query Data**
+- Visual SELECT query builder
+- Column selection (specific columns or *)
+- Optional WHERE clause builder
+- Real-time results in formatted tables
+
+#### Web UI Benefits
+
+- **No SQL knowledge required** for basic operations (use wizards and forms)
+- **Parser integration** - same validation as REPL
+- **Real-time feedback** - instant error messages and results
+- **Modern UX** - clean interface with animations and responsive design
+- **Zero page reloads** - powered by HTMX for seamless interactions
+
+### Running the Web Server (API Mode)
+
+```bash
+./godb-web
+```
+
+The server starts on `http://localhost:8080` and provides:
+- **Interactive Web UI** at `http://localhost:8080/`
+- **REST API endpoints** (see below)
 
 #### API Endpoints
 
@@ -106,7 +162,7 @@ The server starts on `http://localhost:8080` with these endpoints:
 ```bash
 curl -X POST http://localhost:8080/users \
   -H "Content-Type: application/json" \
-  -d '{"id": 1, "name": "Alice", "email": "alice@example.com"}'
+  -d '{"id": 1, "name": "moses", "email": "moses@example.com"}'
 ```
 
 **Get All Users**
@@ -141,6 +197,7 @@ curl http://localhost:8080/posts
 
 ### 3. Constraint Enforcement
 - **Primary Key**: Uniqueness + NOT NULL automatically enforced
+  - Only one primary key allowed per table (enforced in UI and backend)
 - **Unique**: Prevents duplicate values using indexes
 - **NOT NULL**: Validates presence during INSERT/UPDATE
 - Validation happens before data modification
@@ -186,8 +243,20 @@ godb/
 │   ├── repl.go               # REPL loop
 │   └── printer.go            # Output formatting
 ├── web/
+│   ├── templates/            # HTML templates
+│   │   ├── layout.html       # Base page layout
+│   │   ├── console.html      # SQL console tab
+│   │   ├── create.html       # Create table wizard
+│   │   ├── insert.html       # Insert data tab
+│   │   ├── query.html        # Query builder tab
+│   │   └── results.html      # Results display partial
+│   ├── static/               # Static assets
+│   │   ├── css/
+│   │   │   └── style.css     # UI styling
+│   │   └── js/
+│   │       └── htmx.min.js   # HTMX library
 │   ├── server.go             # HTTP server setup
-│   ├── handlers.go           # Route handlers
+│   ├── handlers.go           # Route handlers (UI + API)
 │   └── dto.go                # Request/response models
 ├── tests/
 │   ├── engine/               # Engine tests
@@ -247,11 +316,15 @@ These limitations are deliberate to maintain simplicity and focus on core databa
 
 - **Go Standard Library Only**
   - `net/http` for web server
+  - `html/template` for web UI rendering
   - `encoding/json` for API serialization
   - `bufio` for REPL input
   - `testing` for tests
 
-No external dependencies required.
+- **Frontend** (single vendored file)
+  - `htmx.min.js` - Enables dynamic UI without page reloads
+
+No external Go dependencies. HTMX is a single JavaScript file vendored in the repository.
 
 ## License
 

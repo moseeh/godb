@@ -1,15 +1,22 @@
 {{define "results"}}
 {{if .Error}}
-<div class="error-message">
-    <strong>Error:</strong> {{.Error}}
+<!-- Toast trigger for error -->
+<div data-toast data-toast-type="error" data-toast-title="Error" data-toast-message="{{.Error}}" style="display:none;">
+</div>
+<div class="empty-results">
+    <div class="empty-results-icon">!</div>
+    <p>Query failed. Check the error message above.</p>
 </div>
 {{else if .Success}}
-<div class="success-message">
-    <strong>Success:</strong> {{.Message}}
-    {{if .RowsAffected}}
-    <span class="row-count">({{.RowsAffected}} row(s) affected)</span>
-    {{end}}
+{{if not .Rows}}
+<!-- Toast trigger for success (non-SELECT queries) -->
+<div data-toast data-toast-type="success" data-toast-title="Success" data-toast-message="{{.Message}}"
+    style="display:none;"></div>
+<div class="empty-results">
+    <div class="empty-results-icon">&#10003;</div>
+    <p>{{.Message}}</p>
 </div>
+{{end}}
 {{end}}
 
 {{if .Rows}}
@@ -19,7 +26,10 @@
         <thead>
             <tr>
                 {{range .Columns}}
-                <th>{{.}}</th>
+                <th>
+                    {{.Name}}
+                    {{if .IsPrimaryKey}}<span class="pk-indicator">PK</span>{{end}}
+                </th>
                 {{end}}
             </tr>
         </thead>
@@ -27,7 +37,7 @@
             {{range $row := .Rows}}
             <tr>
                 {{range $.Columns}}
-                <td>{{index $row .}}</td>
+                <td>{{index $row .Name}}</td>
                 {{end}}
             </tr>
             {{end}}

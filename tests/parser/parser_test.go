@@ -48,7 +48,7 @@ func TestParseCreateTable(t *testing.T) {
 }
 
 func TestParseInsert(t *testing.T) {
-	input := "INSERT INTO users (id, name) VALUES (1, 'Alice')"
+	input := "INSERT INTO users (id, name) VALUES (1, 'moses')"
 	p := parser.NewParser(input)
 	cmd, err := p.Parse()
 
@@ -73,8 +73,8 @@ func TestParseInsert(t *testing.T) {
 		t.Errorf("Expected id=1, got %v", insertCmd.Values["id"])
 	}
 
-	if insertCmd.Values["name"] != "Alice" {
-		t.Errorf("Expected name='Alice', got %v", insertCmd.Values["name"])
+	if insertCmd.Values["name"] != "moses" {
+		t.Errorf("Expected name='moses', got %v", insertCmd.Values["name"])
 	}
 }
 

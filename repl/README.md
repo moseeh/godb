@@ -37,12 +37,12 @@ When the REPL is running, you can enter SQL commands at the prompt:
 ```
 godb> CREATE TABLE users (id INT PRIMARY KEY, name STRING NOT NULL);
 ✓ Table 'users' created successfully
-godb> INSERT INTO users (id, name) VALUES (1, 'Alice');
+godb> INSERT INTO users (id, name) VALUES (1, 'moses');
 ✓ 1 row inserted
 godb> SELECT * FROM users;
 id | name
 ---+------
-1  | Alice
+1  | moses
 
 1 row(s) returned.
 ```

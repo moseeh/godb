@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>godb - Interactive Database</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/htmx.min.js"></script>
+</head>
+
+<body>
+    <!-- Toast Container for Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <header>
+        <div class="header-content">
+            <!-- Go Gopher Mascot SVG -->
+            <svg class="go-mascot" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                <!-- Body -->
+                <ellipse cx="200" cy="240" rx="90" ry="100" fill="#00ADD8" />
+                <!-- Head -->
+                <circle cx="200" cy="130" r="70" fill="#00ADD8" />
+                <!-- Eyes -->
+                <ellipse cx="175" cy="115" rx="18" ry="22" fill="white" />
+                <ellipse cx="225" cy="115" rx="18" ry="22" fill="white" />
+                <circle cx="178" cy="118" r="8" fill="#3E4348" />
+                <circle cx="228" cy="118" r="8" fill="#3E4348" />
+                <!-- Nose -->
+                <ellipse cx="200" cy="145" rx="12" ry="8" fill="#C3A080" />
+                <!-- Teeth -->
+                <rect x="190" y="155" width="8" height="12" rx="2" fill="white" />
+                <rect x="202" y="155" width="8" height="12" rx="2" fill="white" />
+                <!-- Ears -->
+                <ellipse cx="130" cy="95" rx="15" ry="25" fill="#00ADD8" />
+                <ellipse cx="270" cy="95" rx="15" ry="25" fill="#00ADD8" />
+                <ellipse cx="130" cy="95" rx="8" ry="15" fill="#007d9c" />
+                <ellipse cx="270" cy="95" rx="8" ry="15" fill="#007d9c" />
+                <!-- Arms -->
+                <ellipse cx="115" cy="250" rx="20" ry="35" fill="#00ADD8" />
+                <ellipse cx="285" cy="250" rx="20" ry="35" fill="#00ADD8" />
+                <!-- Feet -->
+                <ellipse cx="160" cy="340" rx="25" ry="15" fill="#00ADD8" />
+                <ellipse cx="240" cy="340" rx="25" ry="15" fill="#00ADD8" />
+            </svg>
+            <div>
+                <h1>godb</h1>
+                <p class="subtitle">Interactive Database Console</p>
+            </div>
+        </div>
+        <span class="header-badge">Built with Go</span>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab-button active" hx-get="/tabs/console" hx-target="#content" hx-swap="innerHTML"
+            data-tab="console">
+            SQL Console
+        </button>
+        <button class="tab-button" hx-get="/tabs/create" hx-target="#content" hx-swap="innerHTML" data-tab="create">
+            Create Table
+        </button>
+        <button class="tab-button" hx-get="/tabs/insert" hx-target="#content" hx-swap="innerHTML" data-tab="insert">
+            Insert Data
+        </button>
+        <button class="tab-button" hx-get="/tabs/query" hx-target="#content" hx-swap="innerHTML" data-tab="query">
+            Query Data
+        </button>
+    </nav>
+
+    <div class="app-container">
+        <main>
+            <div id="content">
+                {{template "console" .}}
+            </div>
+
+            <div id="results-panel">
+                <h3>Results</h3>
+                <div id="results">
+                    <p class="hint">Execute a query to see results here</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        <p>godb v1.0 | Built with <a href="https://go.dev" target="_blank">Go</a> + <a href="https://htmx.org"
+                target="_blank">HTMX</a></p>
+    </footer>
+
+    <script>
+        // Tab switching - update active state on click
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Toast notification system
+        function showToast(type, title, message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">${type === 'success' ? '&#10003;' : '&#10005;'}</div>
+                <div class="toast-content">
+                    <strong>${title}</strong>
+                    ${message}
+                </div>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 200);
+            }, 4000);
+
+            // Click to dismiss
+            toast.addEventListener('click', () => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 200);
+            });
+        }
+
+        // Listen for HTMX events to show toasts
+        document.body.addEventListener('showToast', function (evt) {
+            const { type, title, message } = evt.detail;
+            showToast(type, title, message);
+        });
+
+        // Process results and extract toast messages
+        document.body.addEventListener('htmx:afterSwap', function (evt) {
+            if (evt.detail.target.id === 'results') {
+                // Check for toast data in the response
+                const toastData = evt.detail.target.querySelector('[data-toast]');
+                if (toastData) {
+                    const type = toastData.dataset.toastType;
+                    const title = toastData.dataset.toastTitle;
+                    const message = toastData.dataset.toastMessage;
+                    showToast(type, title, message);
+                    toastData.remove();
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

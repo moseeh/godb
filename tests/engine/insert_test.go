@@ -22,7 +22,7 @@ func TestInsertBasic(t *testing.T) {
 	// Insert row
 	row := engine.Row{
 		"id":   1,
-		"name": "Alice",
+		"name": "moses",
 	}
 
 	err = db.Insert("users", row)
@@ -52,7 +52,7 @@ func TestInsertDuplicatePrimaryKey(t *testing.T) {
 	db.CreateTable("users", schema)
 
 	// Insert first row
-	row1 := engine.Row{"id": 1, "name": "Alice"}
+	row1 := engine.Row{"id": 1, "name": "moses"}
 	err := db.Insert("users", row1)
 	if err != nil {
 		t.Fatalf("First insert failed: %v", err)
@@ -83,14 +83,14 @@ func TestInsertUniqueViolation(t *testing.T) {
 	db.CreateTable("users", schema)
 
 	// Insert first row
-	row1 := engine.Row{"id": 1, "email": "alice@example.com"}
+	row1 := engine.Row{"id": 1, "email": "moses@example.com"}
 	err := db.Insert("users", row1)
 	if err != nil {
 		t.Fatalf("First insert failed: %v", err)
 	}
 
 	// Insert duplicate unique value
-	row2 := engine.Row{"id": 2, "email": "alice@example.com"}
+	row2 := engine.Row{"id": 2, "email": "moses@example.com"}
 	err = db.Insert("users", row2)
 
 	// Should get unique violation error

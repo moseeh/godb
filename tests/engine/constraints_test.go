@@ -16,7 +16,7 @@ func TestPrimaryKeyConstraint(t *testing.T) {
 	db.CreateTable("users", schema)
 
 	// Insert first row
-	row1 := engine.Row{"id": 1, "name": "Alice"}
+	row1 := engine.Row{"id": 1, "name": "moses"}
 	err := db.Insert("users", row1)
 	if err != nil {
 		t.Fatalf("First insert failed: %v", err)
@@ -49,14 +49,14 @@ func TestUniqueConstraint(t *testing.T) {
 	db.CreateTable("users", schema)
 
 	// Insert first row
-	row1 := engine.Row{"id": 1, "email": "alice@example.com", "name": "Alice"}
+	row1 := engine.Row{"id": 1, "email": "moses@example.com", "name": "moses"}
 	err := db.Insert("users", row1)
 	if err != nil {
 		t.Fatalf("First insert failed: %v", err)
 	}
 
 	// Try to insert duplicate unique value
-	row2 := engine.Row{"id": 2, "email": "alice@example.com", "name": "Alice2"}
+	row2 := engine.Row{"id": 2, "email": "moses@example.com", "name": "moses2"}
 	err = db.Insert("users", row2)
 
 	if err == nil {
@@ -106,11 +106,11 @@ func TestUpdateConstraintViolation(t *testing.T) {
 	db.CreateTable("users", schema)
 
 	// Insert two rows
-	db.Insert("users", engine.Row{"id": 1, "email": "alice@example.com"})
+	db.Insert("users", engine.Row{"id": 1, "email": "moses@example.com"})
 	db.Insert("users", engine.Row{"id": 2, "email": "bob@example.com"})
 
 	// Try to update second row with duplicate email
-	updates := engine.Row{"email": "alice@example.com"}
+	updates := engine.Row{"email": "moses@example.com"}
 	condition := &engine.Condition{
 		Column:   "id",
 		Operator: "=",
@@ -136,21 +136,21 @@ func TestMultipleConstraints(t *testing.T) {
 	db.CreateTable("users", schema)
 
 	// Insert valid row
-	row1 := engine.Row{"id": 1, "username": "alice", "email": "alice@example.com"}
+	row1 := engine.Row{"id": 1, "username": "moses", "email": "moses@example.com"}
 	err := db.Insert("users", row1)
 	if err != nil {
 		t.Fatalf("First insert failed: %v", err)
 	}
 
 	// Try to insert duplicate username
-	row2 := engine.Row{"id": 2, "username": "alice", "email": "bob@example.com"}
+	row2 := engine.Row{"id": 2, "username": "moses", "email": "bob@example.com"}
 	err = db.Insert("users", row2)
 	if err == nil {
 		t.Error("Expected unique constraint violation for username")
 	}
 
 	// Try to insert duplicate email
-	row3 := engine.Row{"id": 3, "username": "bob", "email": "alice@example.com"}
+	row3 := engine.Row{"id": 3, "username": "bob", "email": "moses@example.com"}
 	err = db.Insert("users", row3)
 	if err == nil {
 		t.Error("Expected unique constraint violation for email")

@@ -81,3 +81,12 @@ type ErrNoRowsAffected struct{}
 func (e ErrNoRowsAffected) Error() string {
 	return "no rows affected by operation"
 }
+
+// ErrMultiplePrimaryKeys is returned when attempting to create a table with multiple primary keys
+type ErrMultiplePrimaryKeys struct {
+	TableName string
+}
+
+func (e ErrMultiplePrimaryKeys) Error() string {
+	return fmt.Sprintf("table '%s' cannot have multiple primary keys", e.TableName)
+}

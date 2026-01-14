@@ -1,0 +1,63 @@
+{{define "insert"}}
+<div class="panel">
+    <h2>Insert Data</h2>
+    <p class="hint">Insert rows into existing tables</p>
+
+    <div class="form-group">
+        <label for="table-select">Select Table:</label>
+        <select id="table-select" name="table"
+                hx-get="/table-schema"
+                hx-target="#insert-form"
+                hx-swap="innerHTML"
+                hx-include="this">
+            <option value="">-- Select a table --</option>
+            {{range .Tables}}
+            <option value="{{.}}">{{.}}</option>
+            {{end}}
+        </select>
+    </div>
+
+    <div id="insert-form">
+        {{if .SelectedTable}}
+            {{template "insert-form" .}}
+        {{else}}
+        <p class="hint">Select a table to see the insert form</p>
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+{{define "insert-form"}}
+<form hx-post="/build-insert" hx-target="#results" hx-swap="innerHTML">
+    <input type="hidden" name="table_name" value="{{.TableName}}">
+
+    <h3>Insert into {{.TableName}}</h3>
+
+    {{range .Schema}}
+    <div class="form-group">
+        <label for="{{.Name}}">
+            {{.Name}}
+            {{if .PrimaryKey}}<span class="badge">PK</span>{{end}}
+            {{if .Unique}}<span class="badge">UNIQUE</span>{{end}}
+            {{if .NotNull}}<span class="badge">NOT NULL</span>{{end}}
+        </label>
+
+        {{if eq .Type "INT"}}
+        <input type="number" id="{{.Name}}" name="{{.Name}}"
+               {{if or .PrimaryKey .NotNull}}required{{end}}>
+        {{else if eq .Type "STRING"}}
+        <input type="text" id="{{.Name}}" name="{{.Name}}"
+               {{if or .PrimaryKey .NotNull}}required{{end}}>
+        {{else if eq .Type "BOOL"}}
+        <select id="{{.Name}}" name="{{.Name}}" {{if or .PrimaryKey .NotNull}}required{{end}}>
+            <option value="">-- Select --</option>
+            <option value="true">true</option>
+            <option value="false">false</option>
+        </select>
+        {{end}}
+    </div>
+    {{end}}
+
+    <button type="submit" class="btn-primary">Insert Row</button>
+</form>
+{{end}}

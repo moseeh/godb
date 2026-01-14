@@ -47,7 +47,7 @@ The `Database` struct provides methods for performing CRUD (Create, Read, Update
 
 ```go
 // Insert a new row
-row := engine.Row{"id": 1, "name": "Alice"}
+row := engine.Row{"id": 1, "name": "moses"}
 err := db.Insert("users", row)
 if err != nil {
     // Handle error

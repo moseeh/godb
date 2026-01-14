@@ -345,7 +345,7 @@ func (h *Handler) ExecuteSQL(w http.ResponseWriter, r *http.Request) {
 			h.renderResults(w, nil, err.Error())
 			return
 		}
-		h.renderRows(w, rows)
+		h.renderRowsWithTable(w, rows, c.TableName)
 
 	case *parser.UpdateCommand:
 		rowsAffected, err := h.db.Update(c.TableName, c.Updates, c.Condition)
@@ -512,7 +512,7 @@ func (h *Handler) BuildSelect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.renderRows(w, rows)
+	h.renderRowsWithTable(w, rows, tableName)
 }
 
 // Helper functions for rendering results
@@ -537,11 +537,21 @@ func (h *Handler) renderSuccess(w http.ResponseWriter, message string) {
 	h.renderResults(w, data, "")
 }
 
+// ColumnInfo contains column metadata for the results template
+type ColumnInfo struct {
+	Name         string
+	IsPrimaryKey bool
+}
+
 func (h *Handler) renderRows(w http.ResponseWriter, rows []engine.Row) {
+	h.renderRowsWithTable(w, rows, "")
+}
+
+func (h *Handler) renderRowsWithTable(w http.ResponseWriter, rows []engine.Row, tableName string) {
 	if len(rows) == 0 {
 		data := map[string]interface{}{
 			"Success": true,
-			"Message": "Query executed successfully",
+			"Message": "Query executed successfully - no rows returned",
 			"Rows":    []engine.Row{},
 		}
 		h.renderResults(w, data, "")
@@ -549,9 +559,27 @@ func (h *Handler) renderRows(w http.ResponseWriter, rows []engine.Row) {
 	}
 
 	// Extract column names from first row
-	var columns []string
+	var columnNames []string
 	for col := range rows[0] {
-		columns = append(columns, col)
+		columnNames = append(columnNames, col)
+	}
+
+	// Build column info with primary key flags
+	columns := make([]ColumnInfo, 0, len(columnNames))
+	var pkColumn string
+
+	// Try to get primary key info from the table
+	if tableName != "" {
+		if table, err := h.db.GetTable(tableName); err == nil {
+			pkColumn = table.PrimaryKey()
+		}
+	}
+
+	for _, colName := range columnNames {
+		columns = append(columns, ColumnInfo{
+			Name:         colName,
+			IsPrimaryKey: colName == pkColumn,
+		})
 	}
 
 	data := map[string]interface{}{

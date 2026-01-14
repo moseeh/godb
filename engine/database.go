@@ -24,6 +24,17 @@ func (db *Database) CreateTable(name string, schema []Column) error {
 		return ErrTableAlreadyExists{TableName: name}
 	}
 
+	// Validate only one primary key
+	pkCount := 0
+	for _, col := range schema {
+		if col.PrimaryKey {
+			pkCount++
+		}
+	}
+	if pkCount > 1 {
+		return ErrMultiplePrimaryKeys{TableName: name}
+	}
+
 	table := NewTable(name, schema)
 	db.tables[name] = table
 	return nil

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>godb - Interactive Database</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/htmx.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>godb - Interactive Database</h1>
+        <p class="subtitle">A minimal, in-memory relational database</p>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab-button active" hx-get="/tabs/console" hx-target="#content" hx-swap="innerHTML">
+            SQL Console
+        </button>
+        <button class="tab-button" hx-get="/tabs/create" hx-target="#content" hx-swap="innerHTML">
+            Create Table
+        </button>
+        <button class="tab-button" hx-get="/tabs/insert" hx-target="#content" hx-swap="innerHTML">
+            Insert Data
+        </button>
+        <button class="tab-button" hx-get="/tabs/query" hx-target="#content" hx-swap="innerHTML">
+            Query Data
+        </button>
+    </nav>
+
+    <main>
+        <div id="content">
+            {{template "console" .}}
+        </div>
+
+        <div id="results-panel">
+            <h3>Results</h3>
+            <div id="results">
+                <p class="hint">Execute a query to see results here</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>godb v1.0 | Built with Go + HTMX</p>
+    </footer>
+
+    <script>
+        // Add active class to clicked tab
+        document.addEventListener('htmx:afterSwap', function(event) {
+            if (event.detail.target.id === 'content') {
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.detail.elt.classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>

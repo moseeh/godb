@@ -1,0 +1,60 @@
+{{define "query"}}
+<div class="panel">
+    <h2>Query Data</h2>
+    <p class="hint">Build SELECT queries with an optional WHERE clause</p>
+
+    <form hx-post="/build-select" hx-target="#results" hx-swap="innerHTML">
+        <div class="form-group">
+            <label for="query-table">Select Table:</label>
+            <select id="query-table" name="table" required>
+                <option value="">-- Select a table --</option>
+                {{range .Tables}}
+                <option value="{{.}}">{{.}}</option>
+                {{end}}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="columns">Columns (comma-separated, or * for all):</label>
+            <input type="text" id="columns" name="columns" value="*" placeholder="*">
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="use-where" name="use_where" onchange="toggleWhere()">
+                Add WHERE clause
+            </label>
+        </div>
+
+        <div id="where-section" style="display: none;">
+            <div class="form-group">
+                <label for="where-column">Column:</label>
+                <input type="text" id="where-column" name="where_column" placeholder="id">
+            </div>
+
+            <div class="form-group">
+                <label for="where-operator">Operator:</label>
+                <select id="where-operator" name="where_operator">
+                    <option value="=">=</option>
+                    <option value="!=">!=</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="where-value">Value:</label>
+                <input type="text" id="where-value" name="where_value" placeholder="1">
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Execute Query</button>
+    </form>
+</div>
+
+<script>
+function toggleWhere() {
+    const checkbox = document.getElementById('use-where');
+    const section = document.getElementById('where-section');
+    section.style.display = checkbox.checked ? 'block' : 'none';
+}
+</script>
+{{end}}

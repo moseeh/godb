@@ -1,0 +1,42 @@
+{{define "results"}}
+{{if .Error}}
+<div class="error-message">
+    <strong>Error:</strong> {{.Error}}
+</div>
+{{else if .Success}}
+<div class="success-message">
+    <strong>Success:</strong> {{.Message}}
+    {{if .RowsAffected}}
+    <span class="row-count">({{.RowsAffected}} row(s) affected)</span>
+    {{end}}
+</div>
+{{end}}
+
+{{if .Rows}}
+<div class="results-table">
+    <p class="row-count">{{len .Rows}} row(s) returned</p>
+    <table>
+        <thead>
+            <tr>
+                {{range .Columns}}
+                <th>{{.}}</th>
+                {{end}}
+            </tr>
+        </thead>
+        <tbody>
+            {{range $row := .Rows}}
+            <tr>
+                {{range $.Columns}}
+                <td>{{index $row .}}</td>
+                {{end}}
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{else if not .Error}}
+{{if not .Success}}
+<p class="hint">Execute a query to see results here</p>
+{{end}}
+{{end}}
+{{end}}

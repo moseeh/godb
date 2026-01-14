@@ -1,0 +1,33 @@
+{{define "console"}}
+<div class="panel">
+    <h2>SQL Console</h2>
+    <p class="hint">Enter raw SQL commands and execute them directly</p>
+
+    <form hx-post="/execute" hx-target="#results" hx-swap="innerHTML">
+        <div class="form-group">
+            <label for="sql">SQL Command:</label>
+            <textarea id="sql" name="sql" rows="8" placeholder="CREATE TABLE users (id INT PRIMARY KEY, name STRING NOT NULL, email STRING UNIQUE)
+
+INSERT INTO users (id, name, email) VALUES (1, 'Moses', 'Moses@example.com')
+
+SELECT * FROM users
+
+UPDATE users SET name = 'Moses Otieno' WHERE id = 1
+
+DELETE FROM users WHERE id = 1"></textarea>
+        </div>
+
+        <button type="submit" class="btn-primary">Execute SQL</button>
+    </form>
+
+    <div class="examples">
+        <h4>Examples:</h4>
+        <ul>
+            <li><code>CREATE TABLE users (id INT PRIMARY KEY, name STRING NOT NULL)</code></li>
+            <li><code>INSERT INTO users (id, name) VALUES (1, 'Moses')</code></li>
+            <li><code>SELECT * FROM users</code></li>
+            <li><code>SELECT * FROM posts INNER JOIN users ON posts.user_id = users.id</code></li>
+        </ul>
+    </div>
+</div>
+{{end}}

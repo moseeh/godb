@@ -1,0 +1,204 @@
+{{define "create"}}
+<div class="panel">
+    <h2>Create Table Wizard</h2>
+    <p class="hint">Build a new table step by step</p>
+
+    <div id="wizard-content">
+        {{if not .Step}}
+            {{template "create-step1" .}}
+        {{else if eq .Step "step2"}}
+            {{template "create-step2" .}}
+        {{else if eq .Step "review"}}
+            {{template "create-review" .}}
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+{{define "create-step1"}}
+<div class="wizard-step">
+    <h3>Step 1: Table Name</h3>
+
+    <form hx-post="/wizard/create/step2" hx-target="#wizard-content" hx-swap="innerHTML">
+        <div class="form-group">
+            <label for="table-name">Table Name:</label>
+            <input type="text" id="table-name" name="table_name" required
+                   placeholder="users" value="{{.TableName}}">
+        </div>
+
+        <button type="submit" class="btn-primary">Next: Add Columns</button>
+    </form>
+</div>
+{{end}}
+
+{{define "create-step2"}}
+<div class="wizard-step">
+    <h3>Step 2: Define Columns</h3>
+    <p class="wizard-table-name">Table: <strong>{{.TableName}}</strong></p>
+
+    <form id="columns-form" hx-post="/wizard/create/review" hx-target="#wizard-content" hx-swap="innerHTML">
+        <input type="hidden" name="table_name" value="{{.TableName}}">
+
+        <div id="column-list">
+            {{range $i, $col := .Columns}}
+            <div class="column-row">
+                <input type="text" name="col_name_{{$i}}" placeholder="Column name" value="{{$col.Name}}" required>
+
+                <select name="col_type_{{$i}}" required>
+                    <option value="INT" {{if eq $col.Type "INT"}}selected{{end}}>INT</option>
+                    <option value="STRING" {{if eq $col.Type "STRING"}}selected{{end}}>STRING</option>
+                    <option value="BOOL" {{if eq $col.Type "BOOL"}}selected{{end}}>BOOL</option>
+                </select>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="col_pk_{{$i}}" {{if $col.PrimaryKey}}checked{{end}} onchange="updatePrimaryKeyCheckboxes()">
+                    Primary Key
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="col_unique_{{$i}}" {{if $col.Unique}}checked{{end}}>
+                    Unique
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="col_notnull_{{$i}}" {{if $col.NotNull}}checked{{end}}>
+                    NOT NULL
+                </label>
+
+                {{if gt $i 0}}
+                <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updatePrimaryKeyCheckboxes();">Remove</button>
+                {{end}}
+            </div>
+            {{else}}
+            <div class="column-row">
+                <input type="text" name="col_name_0" placeholder="Column name" required>
+
+                <select name="col_type_0" required>
+                    <option value="INT">INT</option>
+                    <option value="STRING">STRING</option>
+                    <option value="BOOL">BOOL</option>
+                </select>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="col_pk_0" onchange="updatePrimaryKeyCheckboxes()">
+                    Primary Key
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="col_unique_0">
+                    Unique
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="col_notnull_0">
+                    NOT NULL
+                </label>
+            </div>
+            {{end}}
+        </div>
+
+        <button type="button" class="btn-secondary" onclick="addColumnRow()">Add Column</button>
+
+        <div class="button-group">
+            <button type="button" class="btn-secondary" hx-get="/tabs/create" hx-target="#wizard-content" hx-swap="innerHTML">
+                Back
+            </button>
+            <button type="submit" class="btn-primary">Next: Review</button>
+        </div>
+    </form>
+</div>
+
+<script>
+let colIndex = {{len .Columns}};
+
+function updatePrimaryKeyCheckboxes() {
+    const allPKCheckboxes = document.querySelectorAll('input[name^="col_pk_"]');
+    const checkedPK = Array.from(allPKCheckboxes).find(cb => cb.checked);
+
+    allPKCheckboxes.forEach(cb => {
+        if (checkedPK && cb !== checkedPK) {
+            cb.disabled = true;
+            cb.parentElement.style.opacity = '0.5';
+            cb.parentElement.title = 'Only one primary key allowed per table';
+        } else {
+            cb.disabled = false;
+            cb.parentElement.style.opacity = '1';
+            cb.parentElement.title = '';
+        }
+    });
+}
+
+function addColumnRow() {
+    const columnList = document.getElementById('column-list');
+    const newRow = document.createElement('div');
+    newRow.className = 'column-row';
+    newRow.innerHTML = `
+        <input type="text" name="col_name_${colIndex}" placeholder="Column name" required>
+
+        <select name="col_type_${colIndex}" required>
+            <option value="INT">INT</option>
+            <option value="STRING">STRING</option>
+            <option value="BOOL">BOOL</option>
+        </select>
+
+        <label class="checkbox-label">
+            <input type="checkbox" name="col_pk_${colIndex}" onchange="updatePrimaryKeyCheckboxes()">
+            Primary Key
+        </label>
+
+        <label class="checkbox-label">
+            <input type="checkbox" name="col_unique_${colIndex}">
+            Unique
+        </label>
+
+        <label class="checkbox-label">
+            <input type="checkbox" name="col_notnull_${colIndex}">
+            NOT NULL
+        </label>
+
+        <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updatePrimaryKeyCheckboxes();">Remove</button>
+    `;
+    columnList.appendChild(newRow);
+    colIndex++;
+    updatePrimaryKeyCheckboxes();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updatePrimaryKeyCheckboxes();
+});
+
+// Also update when HTMX swaps content
+document.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === 'wizard-content') {
+        updatePrimaryKeyCheckboxes();
+    }
+});
+</script>
+{{end}}
+
+{{define "create-review"}}
+<div class="wizard-step">
+    <h3>Step 3: Review and Execute</h3>
+
+    <div class="sql-preview">
+        <h4>Generated SQL:</h4>
+        <pre><code>{{.SQL}}</code></pre>
+    </div>
+
+    <form hx-post="/execute" hx-target="#results" hx-swap="innerHTML">
+        <input type="hidden" name="sql" value="{{.SQL}}">
+
+        <div class="button-group">
+            <button type="button" class="btn-secondary"
+                    hx-post="/wizard/create/step2"
+                    hx-vals='{"table_name": "{{.TableName}}", "from_review": "true"}'
+                    hx-target="#wizard-content"
+                    hx-swap="innerHTML">
+                Back: Edit Columns
+            </button>
+            <button type="submit" class="btn-primary">Execute CREATE TABLE</button>
+        </div>
+    </form>
+</div>
+{{end}}

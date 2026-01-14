@@ -52,8 +52,8 @@ The web server exposes the following RESTful endpoints:
         ```json
         {
             "id": 1,
-            "name": "Alice",
-            "email": "alice@example.com"
+            "name": "moses",
+            "email": "moses@example.com"
         }
         ```
     -   **Response:**
@@ -69,8 +69,8 @@ The web server exposes the following RESTful endpoints:
         [
             {
                 "id": 1,
-                "name": "Alice",
-                "email": "alice@example.com"
+                "name": "moses",
+                "email": "moses@example.com"
             }
         ]
         ```
@@ -103,8 +103,8 @@ The web server exposes the following RESTful endpoints:
                 "post_title": "My First Post",
                 "post_body": "This is the content of my first post.",
                 "user_id": 1,
-                "user_name": "Alice",
-                "user_email": "alice@example.com"
+                "user_name": "moses",
+                "user_email": "moses@example.com"
             }
         ]
         ```

@@ -4,7 +4,7 @@
   --go-cyan-dark: #007d9c;
   --go-cyan-light: #5dc9e2;
   --go-blue: #00a29c;
-  --go-gray-dark: #3e4348;
+  --go-gray-dark: #2a2c2e;
   --go-gray: #6b7075;
   --go-gray-light: #f0f2f3;
   --go-white: #ffffff;
@@ -44,6 +44,7 @@ header {
   align-items: center;
   justify-content: space-between;
   box-shadow: var(--shadow-md);
+  max-width: 1800;
 }
 
 .header-content {
@@ -53,14 +54,14 @@ header {
 }
 
 .go-mascot {
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  height: 60px;
   flex-shrink: 0;
 }
 
 header h1 {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 900;
   letter-spacing: -0.5px;
   margin: 0;
 }
@@ -130,7 +131,7 @@ nav.tabs {
 
 /* Main Layout */
 .app-container {
-  max-width: 1000px;
+  max-width: 1800px;
   margin: 0 auto;
   padding: 1.5rem;
 }

@@ -5,11 +5,11 @@
 
     <div id="wizard-content">
         {{if not .Step}}
-            {{template "create-step1" .}}
+        {{template "create-step1" .}}
         {{else if eq .Step "step2"}}
-            {{template "create-step2" .}}
+        {{template "create-step2" .}}
         {{else if eq .Step "review"}}
-            {{template "create-review" .}}
+        {{template "create-review" .}}
         {{end}}
     </div>
 </div>
@@ -22,8 +22,7 @@
     <form hx-post="/wizard/create/step2" hx-target="#wizard-content" hx-swap="innerHTML">
         <div class="form-group">
             <label for="table-name">Table Name:</label>
-            <input type="text" id="table-name" name="table_name" required
-                   placeholder="users" value="{{.TableName}}">
+            <input type="text" id="table-name" name="table_name" required placeholder="table name ..." value="{{.TableName}}">
         </div>
 
         <button type="submit" class="btn-primary">Next: Add Columns</button>
@@ -45,13 +44,14 @@
                 <input type="text" name="col_name_{{$i}}" placeholder="Column name" value="{{$col.Name}}" required>
 
                 <select name="col_type_{{$i}}" required>
-                    <option value="INT" {{if eq $col.Type "INT"}}selected{{end}}>INT</option>
-                    <option value="STRING" {{if eq $col.Type "STRING"}}selected{{end}}>STRING</option>
-                    <option value="BOOL" {{if eq $col.Type "BOOL"}}selected{{end}}>BOOL</option>
+                    <option value="INT" {{if eq $col.Type "INT" }}selected{{end}}>INT</option>
+                    <option value="STRING" {{if eq $col.Type "STRING" }}selected{{end}}>STRING</option>
+                    <option value="BOOL" {{if eq $col.Type "BOOL" }}selected{{end}}>BOOL</option>
                 </select>
 
                 <label class="checkbox-label">
-                    <input type="checkbox" name="col_pk_{{$i}}" {{if $col.PrimaryKey}}checked{{end}} onchange="updatePrimaryKeyCheckboxes()">
+                    <input type="checkbox" name="col_pk_{{$i}}" {{if $col.PrimaryKey}}checked{{end}}
+                        onchange="updatePrimaryKeyCheckboxes()">
                     Primary Key
                 </label>
 
@@ -66,7 +66,8 @@
                 </label>
 
                 {{if gt $i 0}}
-                <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updatePrimaryKeyCheckboxes();">Remove</button>
+                <button type="button" class="btn-remove"
+                    onclick="this.parentElement.remove(); updatePrimaryKeyCheckboxes();">Remove</button>
                 {{end}}
             </div>
             {{else}}
@@ -100,7 +101,8 @@
         <button type="button" class="btn-secondary" onclick="addColumnRow()">Add Column</button>
 
         <div class="button-group">
-            <button type="button" class="btn-secondary" hx-get="/tabs/create" hx-target="#wizard-content" hx-swap="innerHTML">
+            <button type="button" class="btn-secondary" hx-get="/tabs/create" hx-target="#wizard-content"
+                hx-swap="innerHTML">
                 Back
             </button>
             <button type="submit" class="btn-primary">Next: Review</button>
@@ -109,30 +111,30 @@
 </div>
 
 <script>
-let colIndex = {{len .Columns}};
+    let colIndex = {{ len .Columns }};
 
-function updatePrimaryKeyCheckboxes() {
-    const allPKCheckboxes = document.querySelectorAll('input[name^="col_pk_"]');
-    const checkedPK = Array.from(allPKCheckboxes).find(cb => cb.checked);
+    function updatePrimaryKeyCheckboxes() {
+        const allPKCheckboxes = document.querySelectorAll('input[name^="col_pk_"]');
+        const checkedPK = Array.from(allPKCheckboxes).find(cb => cb.checked);
 
-    allPKCheckboxes.forEach(cb => {
-        if (checkedPK && cb !== checkedPK) {
-            cb.disabled = true;
-            cb.parentElement.style.opacity = '0.5';
-            cb.parentElement.title = 'Only one primary key allowed per table';
-        } else {
-            cb.disabled = false;
-            cb.parentElement.style.opacity = '1';
-            cb.parentElement.title = '';
-        }
-    });
-}
+        allPKCheckboxes.forEach(cb => {
+            if (checkedPK && cb !== checkedPK) {
+                cb.disabled = true;
+                cb.parentElement.style.opacity = '0.5';
+                cb.parentElement.title = 'Only one primary key allowed per table';
+            } else {
+                cb.disabled = false;
+                cb.parentElement.style.opacity = '1';
+                cb.parentElement.title = '';
+            }
+        });
+    }
 
-function addColumnRow() {
-    const columnList = document.getElementById('column-list');
-    const newRow = document.createElement('div');
-    newRow.className = 'column-row';
-    newRow.innerHTML = `
+    function addColumnRow() {
+        const columnList = document.getElementById('column-list');
+        const newRow = document.createElement('div');
+        newRow.className = 'column-row';
+        newRow.innerHTML = `
         <input type="text" name="col_name_${colIndex}" placeholder="Column name" required>
 
         <select name="col_type_${colIndex}" required>
@@ -158,22 +160,22 @@ function addColumnRow() {
 
         <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updatePrimaryKeyCheckboxes();">Remove</button>
     `;
-    columnList.appendChild(newRow);
-    colIndex++;
-    updatePrimaryKeyCheckboxes();
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    updatePrimaryKeyCheckboxes();
-});
-
-// Also update when HTMX swaps content
-document.addEventListener('htmx:afterSwap', function(event) {
-    if (event.detail.target.id === 'wizard-content') {
+        columnList.appendChild(newRow);
+        colIndex++;
         updatePrimaryKeyCheckboxes();
     }
-});
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        updatePrimaryKeyCheckboxes();
+    });
+
+    // Also update when HTMX swaps content
+    document.addEventListener('htmx:afterSwap', function (event) {
+        if (event.detail.target.id === 'wizard-content') {
+            updatePrimaryKeyCheckboxes();
+        }
+    });
 </script>
 {{end}}
 
@@ -190,11 +192,9 @@ document.addEventListener('htmx:afterSwap', function(event) {
         <input type="hidden" name="sql" value="{{.SQL}}">
 
         <div class="button-group">
-            <button type="button" class="btn-secondary"
-                    hx-post="/wizard/create/step2"
-                    hx-vals='{"table_name": "{{.TableName}}", "from_review": "true"}'
-                    hx-target="#wizard-content"
-                    hx-swap="innerHTML">
+            <button type="button" class="btn-secondary" hx-post="/wizard/create/step2"
+                hx-vals='{"table_name": "{{.TableName}}", "from_review": "true"}' hx-target="#wizard-content"
+                hx-swap="innerHTML">
                 Back: Edit Columns
             </button>
             <button type="submit" class="btn-primary">Execute CREATE TABLE</button>

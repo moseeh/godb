@@ -24,7 +24,7 @@ func TestInnerJoinBasic(t *testing.T) {
 	db.CreateTable("posts", postsSchema)
 
 	// Insert users
-	db.Insert("users", engine.Row{"id": 1, "name": "Alice"})
+	db.Insert("users", engine.Row{"id": 1, "name": "moses"})
 	db.Insert("users", engine.Row{"id": 2, "name": "Bob"})
 
 	// Insert posts
@@ -78,7 +78,7 @@ func TestInnerJoinWithIndex(t *testing.T) {
 	table.CreateIndex("id")
 
 	// Insert data
-	db.Insert("users", engine.Row{"id": 1, "name": "Alice"})
+	db.Insert("users", engine.Row{"id": 1, "name": "moses"})
 	db.Insert("posts", engine.Row{"id": 1, "user_id": 1, "title": "Post 1"})
 
 	// Join should use index
@@ -115,7 +115,7 @@ func TestInnerJoinNoMatches(t *testing.T) {
 	db.CreateTable("posts", postsSchema)
 
 	// Insert users
-	db.Insert("users", engine.Row{"id": 1, "name": "Alice"})
+	db.Insert("users", engine.Row{"id": 1, "name": "moses"})
 
 	// Insert posts with non-matching user_id
 	db.Insert("posts", engine.Row{"id": 1, "user_id": 999, "title": "Post 1"})

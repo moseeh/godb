@@ -17,7 +17,7 @@ func TestSelectAll(t *testing.T) {
 
 	// Insert test data
 	rows := []engine.Row{
-		{"id": 1, "name": "Alice"},
+		{"id": 1, "name": "moses"},
 		{"id": 2, "name": "Bob"},
 		{"id": 3, "name": "Charlie"},
 	}
@@ -91,7 +91,7 @@ func TestSelectWithIndex(t *testing.T) {
 
 	// Insert test data
 	rows := []engine.Row{
-		{"id": 1, "email": "alice@example.com"},
+		{"id": 1, "email": "moses@example.com"},
 		{"id": 2, "email": "bob@example.com"},
 		{"id": 3, "email": "charlie@example.com"},
 	}
@@ -132,7 +132,7 @@ func TestSelectSpecificColumns(t *testing.T) {
 
 	db.CreateTable("users", schema)
 
-	row := engine.Row{"id": 1, "name": "Alice", "email": "alice@example.com"}
+	row := engine.Row{"id": 1, "name": "moses", "email": "moses@example.com"}
 	db.Insert("users", row)
 
 	// Select only specific columns

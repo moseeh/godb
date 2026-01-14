@@ -3,21 +3,27 @@ package web
 import (
 	"fmt"
 	"godb/engine"
+	"html/template"
 	"log"
 	"net/http"
 )
 
 // Server represents the HTTP server
 type Server struct {
-	db   *engine.Database
-	addr string
+	db        *engine.Database
+	addr      string
+	templates *template.Template
 }
 
 // NewServer creates a new HTTP server
 func NewServer(addr string) *Server {
+	// Parse all templates
+	templates := template.Must(template.ParseGlob("web/templates/*.html"))
+
 	return &Server{
-		db:   engine.NewDatabase(),
-		addr: addr,
+		db:        engine.NewDatabase(),
+		addr:      addr,
+		templates: templates,
 	}
 }
 
@@ -57,9 +63,30 @@ func (s *Server) Initialize() error {
 
 // Start starts the HTTP server
 func (s *Server) Start() error {
-	handler := NewHandler(s.db)
+	handler := NewHandler(s.db, s.templates)
 
-	// Register routes
+	// Serve static files
+	fs := http.FileServer(http.Dir("web/static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+
+	// UI routes
+	http.HandleFunc("/", handler.Index)
+	http.HandleFunc("/tabs/console", handler.ConsoleTab)
+	http.HandleFunc("/tabs/create", handler.CreateTab)
+	http.HandleFunc("/tabs/insert", handler.InsertTab)
+	http.HandleFunc("/tabs/query", handler.QueryTab)
+
+	// Wizard routes
+	http.HandleFunc("/wizard/create/step2", handler.CreateStep2)
+	http.HandleFunc("/wizard/create/review", handler.CreateReview)
+
+	// Action routes
+	http.HandleFunc("/execute", handler.ExecuteSQL)
+	http.HandleFunc("/table-schema", handler.TableSchema)
+	http.HandleFunc("/build-insert", handler.BuildInsert)
+	http.HandleFunc("/build-select", handler.BuildSelect)
+
+	// Legacy API routes (kept for backward compatibility)
 	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -83,11 +110,9 @@ func (s *Server) Start() error {
 	})
 
 	log.Printf("Starting godb web server on %s", s.addr)
-	log.Println("Available endpoints:")
-	log.Println("  POST /users - Create a user")
-	log.Println("  GET  /users - List all users")
-	log.Println("  POST /posts - Create a post")
-	log.Println("  GET  /posts - List all posts (with JOIN to users)")
+	log.Println("Available interfaces:")
+	log.Println("  Web UI:  http://localhost:8080/")
+	log.Println("  API:     POST /users, GET /users, POST /posts, GET /posts")
 
 	return http.ListenAndServe(s.addr, nil)
 }

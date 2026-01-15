@@ -1,0 +1,142 @@
+{{define "delete"}}
+<div class="panel">
+    <h2>Delete Data</h2>
+    <p class="hint">Remove rows from your tables</p>
+
+    <div class="warning-banner">
+        <span class="warning-banner-icon">!</span>
+        <div class="warning-banner-content">
+            <strong>Caution:</strong> Delete operations are irreversible. Always preview matching rows before deleting.
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="delete-table-select">Select Table:</label>
+        <select id="delete-table-select" name="table"
+                hx-get="/table-schema-delete"
+                hx-target="#delete-condition"
+                hx-swap="innerHTML"
+                hx-include="this">
+            <option value="">-- Select a table --</option>
+            {{range .Tables}}
+            <option value="{{.}}">{{.}}</option>
+            {{end}}
+        </select>
+    </div>
+
+    <div id="delete-condition">
+        <p class="hint">Select a table to define deletion criteria</p>
+    </div>
+</div>
+{{end}}
+
+{{define "delete-condition"}}
+<div class="delete-section">
+    <h3>Define Condition</h3>
+    <p class="hint">Specify which rows to delete using a WHERE condition</p>
+
+    <form hx-post="/preview-delete" hx-target="#delete-preview" hx-swap="innerHTML">
+        <input type="hidden" name="table_name" value="{{.TableName}}">
+
+        <div class="condition-row">
+            <div class="form-group">
+                <label for="delete-column">Column:</label>
+                <select id="delete-column" name="where_column" required>
+                    {{range .Schema}}
+                    <option value="{{.Name}}" {{if .PrimaryKey}}selected{{end}}>{{.Name}}{{if .PrimaryKey}} (PK){{end}}</option>
+                    {{end}}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="delete-operator">Operator:</label>
+                <select id="delete-operator" name="where_operator">
+                    <option value="=">=</option>
+                    <option value="!=">!=</option>
+                    <option value=">">></option>
+                    <option value="<"><</option>
+                    <option value=">=">>=</option>
+                    <option value="<="><=</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="delete-value">Value:</label>
+                <input type="text" id="delete-value" name="where_value" placeholder="Enter value..." required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-secondary">Preview Matching Rows</button>
+    </form>
+</div>
+
+<div id="delete-preview">
+    <p class="hint">Enter a condition and click "Preview Matching Rows" to see what will be deleted</p>
+</div>
+{{end}}
+
+{{define "delete-preview"}}
+{{if .Error}}
+<div class="error-message">
+    <span class="error-icon">!</span>
+    {{.Error}}
+</div>
+{{else if .NoRows}}
+<div class="info-message">
+    <span class="info-icon">i</span>
+    No rows match your condition. Nothing will be deleted.
+</div>
+{{else}}
+<div class="delete-section delete-preview-section">
+    <h3>Rows to be Deleted</h3>
+
+    <div class="delete-warning-box">
+        <span class="delete-count">{{.RowCount}}</span>
+        <span class="delete-count-label">row(s) will be permanently deleted</span>
+    </div>
+
+    <div class="preview-table-container">
+        <table class="preview-table">
+            <thead>
+                <tr>
+                    {{range .Columns}}
+                    <th>{{.Name}}{{if .PrimaryKey}} <span class="th-badge">PK</span>{{end}}</th>
+                    {{end}}
+                </tr>
+            </thead>
+            <tbody>
+                {{range $row := .Rows}}
+                <tr class="delete-row-preview">
+                    {{range $.Columns}}
+                    <td>{{index $row .Name}}</td>
+                    {{end}}
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sql-preview sql-preview-danger">
+        <h4>SQL to Execute</h4>
+        <pre><code>DELETE FROM {{.TableName}} WHERE {{.WhereColumn}} {{.WhereOperator}} {{.WhereValue}}</code></pre>
+    </div>
+
+    <form hx-post="/build-delete" hx-target="#results" hx-swap="innerHTML">
+        <input type="hidden" name="table_name" value="{{.TableName}}">
+        <input type="hidden" name="where_column" value="{{.WhereColumn}}">
+        <input type="hidden" name="where_operator" value="{{.WhereOperator}}">
+        <input type="hidden" name="where_value" value="{{.WhereValue}}">
+
+        <div class="button-group">
+            <button type="button" class="btn-secondary"
+                    hx-get="/table-schema-delete?table={{.TableName}}"
+                    hx-target="#delete-condition"
+                    hx-swap="innerHTML">
+                Cancel
+            </button>
+            <button type="submit" class="btn-danger">Delete {{.RowCount}} Row(s)</button>
+        </div>
+    </form>
+</div>
+{{end}}
+{{end}}

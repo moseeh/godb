@@ -111,7 +111,7 @@ Navigate to `http://localhost:8080/` in your browser to access the interactive w
 
 #### Web UI Features
 
-The web interface provides four main tabs:
+The web interface provides six main tabs:
 
 **1. SQL Console**
 - Execute raw SQL commands directly
@@ -137,6 +137,22 @@ The web interface provides four main tabs:
 - Column selection (specific columns or *)
 - Optional WHERE clause builder
 - Real-time results in formatted tables
+
+**5. Update Data**
+- Find rows using condition builder (column, operator, value)
+- Edit form pre-populated with current row values
+- Primary key fields displayed as read-only
+- Original values shown for reference
+- SQL preview before execution
+- Constraint validation on update
+
+**6. Delete Data**
+- Warning banner for irreversible operations
+- Condition builder with all comparison operators (=, !=, >, <, >=, <=)
+- Preview matching rows before deletion
+- Row count confirmation
+- Danger-styled UI for destructive actions
+- SQL preview before execution
 
 #### Web UI Benefits
 
@@ -249,6 +265,8 @@ godb/
 │   │   ├── create.html       # Create table wizard
 │   │   ├── insert.html       # Insert data tab
 │   │   ├── query.html        # Query builder tab
+│   │   ├── update.html       # Update data tab
+│   │   ├── delete.html       # Delete data tab
 │   │   └── results.html      # Results display partial
 │   ├── static/               # Static assets
 │   │   ├── css/
@@ -325,6 +343,33 @@ These limitations are deliberate to maintain simplicity and focus on core databa
   - `htmx.min.js` - Enables dynamic UI without page reloads
 
 No external Go dependencies. HTMX is a single JavaScript file vendored in the repository.
+
+## Acknowledgments
+
+This project was conceptualized and designed by [Moses Otieno](https://github.com/moseeh). Development was accelerated with the assistance of [Claude Code](https://claude.ai/claude-code), Anthropic's AI-powered CLI tool, which helped with brainstorming architectural decisions, rapid implementation of features, and debugging.
+
+**Human contributions:**
+- Project concept and vision
+- Architecture decisions
+- Feature requirements and priorities
+- Code review and quality control
+
+**AI-assisted contributions:**
+- Code implementation and boilerplate generation
+- Template and handler scaffolding
+- CSS styling patterns
+- Documentation drafting
+
+### References & Documentation
+
+The following resources were instrumental in building this project:
+
+- **Go Documentation**: [go.dev/doc](https://go.dev/doc/) - Official Go language documentation
+- **Go html/template**: [pkg.go.dev/html/template](https://pkg.go.dev/html/template) - Template engine documentation
+- **Go net/http**: [pkg.go.dev/net/http](https://pkg.go.dev/net/http) - HTTP server package
+- **HTMX Documentation**: [htmx.org/docs](https://htmx.org/docs/) - HTMX library for dynamic HTML
+- **Database Internals**: Concepts inspired by [CMU 15-445 Database Systems](https://15445.courses.cs.cmu.edu/)
+- **Claude Code**: [claude.ai/claude-code](https://claude.ai/claude-code) - AI pair programming assistant
 
 ## License
 

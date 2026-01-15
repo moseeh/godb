@@ -1,0 +1,147 @@
+{{define "update"}}
+<div class="panel">
+    <h2>Update Data</h2>
+    <p class="hint">Find and modify existing rows in your tables</p>
+
+    <div class="form-group">
+        <label for="update-table-select">Select Table:</label>
+        <select id="update-table-select" name="table"
+                hx-get="/table-schema-update"
+                hx-target="#update-finder"
+                hx-swap="innerHTML"
+                hx-include="this">
+            <option value="">-- Select a table --</option>
+            {{range .Tables}}
+            <option value="{{.}}">{{.}}</option>
+            {{end}}
+        </select>
+    </div>
+
+    <div id="update-finder">
+        <p class="hint">Select a table to find rows to update</p>
+    </div>
+</div>
+{{end}}
+
+{{define "update-finder"}}
+<div class="update-section">
+    <h3>Find Row to Update</h3>
+    <p class="hint">Use a condition to locate the row you want to modify</p>
+
+    <form hx-post="/fetch-row" hx-target="#update-editor" hx-swap="innerHTML">
+        <input type="hidden" name="table_name" value="{{.TableName}}">
+
+        <div class="condition-row">
+            <div class="form-group">
+                <label for="find-column">Column:</label>
+                <select id="find-column" name="where_column" required>
+                    {{range .Schema}}
+                    <option value="{{.Name}}" {{if .PrimaryKey}}selected{{end}}>{{.Name}}{{if .PrimaryKey}} (PK){{end}}</option>
+                    {{end}}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="find-operator">Operator:</label>
+                <select id="find-operator" name="where_operator">
+                    <option value="=">=</option>
+                    <option value="!=">!=</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="find-value">Value:</label>
+                <input type="text" id="find-value" name="where_value" placeholder="Enter value..." required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-secondary">Find Row</button>
+    </form>
+</div>
+
+<div id="update-editor">
+    <p class="hint">Enter a condition and click "Find Row" to load data for editing</p>
+</div>
+{{end}}
+
+{{define "update-editor"}}
+{{if .Error}}
+<div class="error-message">
+    <span class="error-icon">!</span>
+    {{.Error}}
+</div>
+{{else if .NoRows}}
+<div class="warning-message">
+    <span class="warning-icon">?</span>
+    No rows found matching your condition. Try a different value.
+</div>
+{{else if .MultipleRows}}
+<div class="warning-message">
+    <span class="warning-icon">!</span>
+    Multiple rows ({{.RowCount}}) match this condition. Please use a more specific condition (e.g., primary key) to update a single row.
+</div>
+{{else}}
+<div class="update-section">
+    <h3>Edit Row Values</h3>
+    <p class="hint">Modify the values below. Primary key fields cannot be changed.</p>
+
+    <form hx-post="/build-update" hx-target="#results" hx-swap="innerHTML">
+        <input type="hidden" name="table_name" value="{{.TableName}}">
+        <input type="hidden" name="where_column" value="{{.WhereColumn}}">
+        <input type="hidden" name="where_value" value="{{.WhereValue}}">
+
+        <div class="edit-fields">
+            {{range .Schema}}
+            <div class="form-group edit-field">
+                <label for="edit-{{.Name}}">
+                    {{.Name}}
+                    {{if .PrimaryKey}}<span class="badge badge-pk">PK</span>{{end}}
+                    {{if .Unique}}<span class="badge badge-unique">UNIQUE</span>{{end}}
+                    {{if .NotNull}}<span class="badge badge-notnull">NOT NULL</span>{{end}}
+                </label>
+
+                {{if eq .Type "INT"}}
+                <input type="number" id="edit-{{.Name}}" name="{{.Name}}"
+                       value="{{index $.RowData .Name}}"
+                       {{if .PrimaryKey}}readonly class="readonly-field"{{end}}
+                       {{if .NotNull}}required{{end}}>
+                {{else if eq .Type "STRING"}}
+                <input type="text" id="edit-{{.Name}}" name="{{.Name}}"
+                       value="{{index $.RowData .Name}}"
+                       {{if .PrimaryKey}}readonly class="readonly-field"{{end}}
+                       {{if .NotNull}}required{{end}}>
+                {{else if eq .Type "BOOL"}}
+                <select id="edit-{{.Name}}" name="{{.Name}}"
+                        {{if .PrimaryKey}}disabled{{end}}
+                        {{if .NotNull}}required{{end}}>
+                    <option value="true" {{if index $.RowData .Name}}selected{{end}}>true</option>
+                    <option value="false" {{if not (index $.RowData .Name)}}selected{{end}}>false</option>
+                </select>
+                {{if .PrimaryKey}}<input type="hidden" name="{{.Name}}" value="{{index $.RowData .Name}}">{{end}}
+                {{end}}
+
+                {{if not .PrimaryKey}}
+                <span class="original-value">Original: {{index $.RowData .Name}}</span>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+
+        <div class="sql-preview">
+            <h4>SQL Preview</h4>
+            <pre><code id="update-sql-preview">UPDATE {{.TableName}} SET ... WHERE {{.WhereColumn}} = {{.WhereValue}}</code></pre>
+        </div>
+
+        <div class="button-group">
+            <button type="button" class="btn-secondary"
+                    hx-get="/table-schema-update?table={{.TableName}}"
+                    hx-target="#update-finder"
+                    hx-swap="innerHTML">
+                Cancel
+            </button>
+            <button type="submit" class="btn-primary">Execute Update</button>
+        </div>
+    </form>
+</div>
+{{end}}
+{{end}}

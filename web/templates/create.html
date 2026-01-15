@@ -111,8 +111,6 @@
 </div>
 
 <script>
-    let colIndex = {{ len .Columns }};
-
     function updatePrimaryKeyCheckboxes() {
         const allPKCheckboxes = document.querySelectorAll('input[name^="col_pk_"]');
         const checkedPK = Array.from(allPKCheckboxes).find(cb => cb.checked);
@@ -132,6 +130,9 @@
 
     function addColumnRow() {
         const columnList = document.getElementById('column-list');
+        // Count existing columns to determine the next index
+        const colIndex = columnList.querySelectorAll('.column-row').length;
+
         const newRow = document.createElement('div');
         newRow.className = 'column-row';
         newRow.innerHTML = `
@@ -161,7 +162,6 @@
         <button type="button" class="btn-remove" onclick="this.parentElement.remove(); updatePrimaryKeyCheckboxes();">Remove</button>
     `;
         columnList.appendChild(newRow);
-        colIndex++;
         updatePrimaryKeyCheckboxes();
     }
 

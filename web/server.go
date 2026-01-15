@@ -75,6 +75,8 @@ func (s *Server) Start() error {
 	http.HandleFunc("/tabs/create", handler.CreateTab)
 	http.HandleFunc("/tabs/insert", handler.InsertTab)
 	http.HandleFunc("/tabs/query", handler.QueryTab)
+	http.HandleFunc("/tabs/update", handler.UpdateTab)
+	http.HandleFunc("/tabs/delete", handler.DeleteTab)
 
 	// Wizard routes
 	http.HandleFunc("/wizard/create/step2", handler.CreateStep2)

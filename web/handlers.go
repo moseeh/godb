@@ -589,3 +589,338 @@ func (h *Handler) renderRowsWithTable(w http.ResponseWriter, rows []engine.Row, 
 	h.renderResults(w, data, "")
 }
 
+// === UPDATE & DELETE HANDLERS ===
+
+// UpdateTab renders the update data tab
+func (h *Handler) UpdateTab(w http.ResponseWriter, r *http.Request) {
+	tables := h.db.ListTables()
+	data := map[string]interface{}{
+		"Tables": tables,
+	}
+	if err := h.templates.ExecuteTemplate(w, "update", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// DeleteTab renders the delete data tab
+func (h *Handler) DeleteTab(w http.ResponseWriter, r *http.Request) {
+	tables := h.db.ListTables()
+	data := map[string]interface{}{
+		"Tables": tables,
+	}
+	if err := h.templates.ExecuteTemplate(w, "delete", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// TableSchemaUpdate returns the schema for the update finder form
+func (h *Handler) TableSchemaUpdate(w http.ResponseWriter, r *http.Request) {
+	tableName := r.URL.Query().Get("table")
+	if tableName == "" {
+		http.Error(w, "Table name required", http.StatusBadRequest)
+		return
+	}
+
+	table, err := h.db.GetTable(tableName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	data := map[string]interface{}{
+		"TableName": tableName,
+		"Schema":    table.Schema(),
+	}
+
+	if err := h.templates.ExecuteTemplate(w, "update-finder", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// TableSchemaDelete returns the schema for the delete condition form
+func (h *Handler) TableSchemaDelete(w http.ResponseWriter, r *http.Request) {
+	tableName := r.URL.Query().Get("table")
+	if tableName == "" {
+		http.Error(w, "Table name required", http.StatusBadRequest)
+		return
+	}
+
+	table, err := h.db.GetTable(tableName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	data := map[string]interface{}{
+		"TableName": tableName,
+		"Schema":    table.Schema(),
+	}
+
+	if err := h.templates.ExecuteTemplate(w, "delete-condition", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// FetchRow fetches a row for editing based on a condition
+func (h *Handler) FetchRow(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		h.renderUpdateEditor(w, nil, "Failed to parse form")
+		return
+	}
+
+	tableName := r.FormValue("table_name")
+	whereColumn := r.FormValue("where_column")
+	whereValue := r.FormValue("where_value")
+
+	table, err := h.db.GetTable(tableName)
+	if err != nil {
+		h.renderUpdateEditor(w, nil, err.Error())
+		return
+	}
+
+	// Build condition with type conversion
+	condition := h.buildCondition(table, whereColumn, "=", whereValue)
+
+	// Fetch matching rows
+	rows, err := h.db.Select(tableName, nil, condition)
+	if err != nil {
+		h.renderUpdateEditor(w, nil, err.Error())
+		return
+	}
+
+	data := map[string]interface{}{
+		"TableName":   tableName,
+		"Schema":      table.Schema(),
+		"WhereColumn": whereColumn,
+		"WhereValue":  whereValue,
+	}
+
+	if len(rows) == 0 {
+		data["NoRows"] = true
+	} else if len(rows) > 1 {
+		data["MultipleRows"] = true
+		data["RowCount"] = len(rows)
+	} else {
+		data["RowData"] = rows[0]
+	}
+
+	h.renderUpdateEditor(w, data, "")
+}
+
+// PreviewDelete shows rows that will be deleted
+func (h *Handler) PreviewDelete(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		h.renderDeletePreview(w, nil, "Failed to parse form")
+		return
+	}
+
+	tableName := r.FormValue("table_name")
+	whereColumn := r.FormValue("where_column")
+	whereOperator := r.FormValue("where_operator")
+	whereValue := r.FormValue("where_value")
+
+	table, err := h.db.GetTable(tableName)
+	if err != nil {
+		h.renderDeletePreview(w, nil, err.Error())
+		return
+	}
+
+	// Build condition with type conversion
+	condition := h.buildCondition(table, whereColumn, whereOperator, whereValue)
+
+	// Fetch matching rows
+	rows, err := h.db.Select(tableName, nil, condition)
+	if err != nil {
+		h.renderDeletePreview(w, nil, err.Error())
+		return
+	}
+
+	// Build column info for display
+	schema := table.Schema()
+	columns := make([]map[string]interface{}, len(schema))
+	for i, col := range schema {
+		columns[i] = map[string]interface{}{
+			"Name":       col.Name,
+			"PrimaryKey": col.PrimaryKey,
+		}
+	}
+
+	data := map[string]interface{}{
+		"TableName":     tableName,
+		"WhereColumn":   whereColumn,
+		"WhereOperator": whereOperator,
+		"WhereValue":    formatWhereValue(whereValue),
+		"Columns":       columns,
+		"Rows":          rows,
+		"RowCount":      len(rows),
+	}
+
+	if len(rows) == 0 {
+		data["NoRows"] = true
+	}
+
+	h.renderDeletePreview(w, data, "")
+}
+
+// BuildUpdate builds and executes an UPDATE statement from form data
+func (h *Handler) BuildUpdate(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		h.renderResults(w, nil, err.Error())
+		return
+	}
+
+	tableName := r.FormValue("table_name")
+	whereColumn := r.FormValue("where_column")
+	whereValue := r.FormValue("where_value")
+
+	table, err := h.db.GetTable(tableName)
+	if err != nil {
+		h.renderResults(w, nil, err.Error())
+		return
+	}
+
+	// Build updates from form values (excluding primary key)
+	updates := make(engine.Row)
+	pkColumn := table.PrimaryKey()
+
+	for _, col := range table.Schema() {
+		if col.Name == pkColumn {
+			continue // Skip primary key
+		}
+
+		value := r.FormValue(col.Name)
+		if value == "" {
+			continue
+		}
+
+		switch col.Type {
+		case engine.TypeInt:
+			intVal, err := strconv.Atoi(value)
+			if err != nil {
+				h.renderResults(w, nil, fmt.Sprintf("Invalid integer for %s: %s", col.Name, value))
+				return
+			}
+			updates[col.Name] = intVal
+		case engine.TypeBool:
+			updates[col.Name] = value == "true"
+		default:
+			updates[col.Name] = value
+		}
+	}
+
+	// Build condition
+	condition := h.buildCondition(table, whereColumn, "=", whereValue)
+
+	// Execute UPDATE
+	rowsAffected, err := h.db.Update(tableName, updates, condition)
+	if err != nil {
+		h.renderResults(w, nil, err.Error())
+		return
+	}
+
+	h.renderSuccess(w, fmt.Sprintf("%d row(s) updated successfully", rowsAffected))
+}
+
+// BuildDelete builds and executes a DELETE statement from form data
+func (h *Handler) BuildDelete(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		h.renderResults(w, nil, err.Error())
+		return
+	}
+
+	tableName := r.FormValue("table_name")
+	whereColumn := r.FormValue("where_column")
+	whereOperator := r.FormValue("where_operator")
+	whereValue := r.FormValue("where_value")
+
+	table, err := h.db.GetTable(tableName)
+	if err != nil {
+		h.renderResults(w, nil, err.Error())
+		return
+	}
+
+	// Build condition
+	condition := h.buildCondition(table, whereColumn, whereOperator, whereValue)
+
+	// Execute DELETE
+	rowsAffected, err := h.db.Delete(tableName, condition)
+	if err != nil {
+		h.renderResults(w, nil, err.Error())
+		return
+	}
+
+	h.renderSuccess(w, fmt.Sprintf("%d row(s) deleted successfully", rowsAffected))
+}
+
+// Helper: build condition with proper type conversion
+func (h *Handler) buildCondition(table *engine.Table, column, operator, value string) *engine.Condition {
+	// Find column type
+	var colType engine.ColumnType
+	for _, col := range table.Schema() {
+		if col.Name == column {
+			colType = col.Type
+			break
+		}
+	}
+
+	var typedValue interface{}
+	switch colType {
+	case engine.TypeInt:
+		if intVal, err := strconv.Atoi(value); err == nil {
+			typedValue = intVal
+		} else {
+			typedValue = value
+		}
+	case engine.TypeBool:
+		typedValue = value == "true"
+	default:
+		typedValue = value
+	}
+
+	return &engine.Condition{
+		Column:   column,
+		Operator: operator,
+		Value:    typedValue,
+	}
+}
+
+// Helper: format where value for SQL display
+func formatWhereValue(value string) string {
+	// If it looks like a number, return as-is
+	if _, err := strconv.Atoi(value); err == nil {
+		return value
+	}
+	// If it's a boolean, return as-is
+	if value == "true" || value == "false" {
+		return value
+	}
+	// Otherwise, wrap in quotes
+	return "'" + value + "'"
+}
+
+// Helper: render update editor template
+func (h *Handler) renderUpdateEditor(w http.ResponseWriter, data map[string]interface{}, errorMsg string) {
+	if data == nil {
+		data = make(map[string]interface{})
+	}
+	if errorMsg != "" {
+		data["Error"] = errorMsg
+	}
+	if err := h.templates.ExecuteTemplate(w, "update-editor", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// Helper: render delete preview template
+func (h *Handler) renderDeletePreview(w http.ResponseWriter, data map[string]interface{}, errorMsg string) {
+	if data == nil {
+		data = make(map[string]interface{})
+	}
+	if errorMsg != "" {
+		data["Error"] = errorMsg
+	}
+	if err := h.templates.ExecuteTemplate(w, "delete-preview", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+

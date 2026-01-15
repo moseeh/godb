@@ -87,6 +87,14 @@ func (s *Server) Start() error {
 	http.HandleFunc("/table-schema", handler.TableSchema)
 	http.HandleFunc("/build-insert", handler.BuildInsert)
 	http.HandleFunc("/build-select", handler.BuildSelect)
+	http.HandleFunc("/build-update", handler.BuildUpdate)
+	http.HandleFunc("/build-delete", handler.BuildDelete)
+
+	// Update/Delete helper routes
+	http.HandleFunc("/table-schema-update", handler.TableSchemaUpdate)
+	http.HandleFunc("/table-schema-delete", handler.TableSchemaDelete)
+	http.HandleFunc("/fetch-row", handler.FetchRow)
+	http.HandleFunc("/preview-delete", handler.PreviewDelete)
 
 	// Legacy API routes (kept for backward compatibility)
 	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {

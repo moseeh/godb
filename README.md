@@ -109,6 +109,24 @@ SELECT * FROM posts INNER JOIN users ON posts.user_id = users.id
 
 Navigate to `http://localhost:8080/` in your browser to access the interactive web interface.
 
+#### Screenshots
+
+**SQL Console** - Execute raw SQL commands directly with syntax examples:
+
+![SQL Console](screenshots/sql-console.png)
+
+**Create Table Wizard** - Visual column builder with type selection and constraints:
+
+![Create Table - Define Columns](screenshots/create-table-columns.png)
+
+**SQL Preview** - Review generated SQL before execution:
+
+![Create Table - SQL Preview](screenshots/create-table-preview.png)
+
+**Success Feedback** - Real-time notifications and results:
+
+![Create Table - Success](screenshots/create-table-success.png)
+
 #### Web UI Features
 
 The web interface provides six main tabs:
@@ -279,6 +297,7 @@ godb/
 ├── tests/
 │   ├── engine/               # Engine tests
 │   └── parser/               # Parser tests
+├── screenshots/              # Web UI screenshots
 ├── go.mod
 └── README.md
 ```
